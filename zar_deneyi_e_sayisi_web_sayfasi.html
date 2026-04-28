@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>e Sayısı Zar Deneyi - Gelişmiş Versiyon</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f4f6f9;
+        text-align: center;
+    }
+    .container {
+        max-width: 900px;
+        margin: auto;
+        padding: 20px;
+    }
+    h1 {
+        color: #2c3e50;
+    }
+    input {
+        padding: 10px;
+        font-size: 16px;
+        margin: 10px;
+        width: 220px;
+    }
+    button {
+        padding: 12px 20px;
+        font-size: 16px;
+        margin: 10px;
+        cursor: pointer;
+        border: none;
+        border-radius: 10px;
+        background-color: #3498db;
+        color: white;
+    }
+    button:hover {
+        background-color: #2980b9;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: white;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+    th {
+        background-color: #3498db;
+        color: white;
+    }
+    .result-box {
+        font-size: 18px;
+        margin-top: 15px;
+        font-weight: bold;
+    }
+    #teacherPanel {
+        display: none;
+        margin-top: 30px;
+        padding: 15px;
+        border: 2px solid #3498db;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>🎲 e Sayısı Zar Deneyi</h1>
+
+<p>
+Her öğrenci <b>5 kez</b>, 6 gelene kadar zar atar.<br>
+Sonuçlar otomatik kaydedilir ve grafik oluşturulur.
+</p>
+
+<input type="text" id="studentName" placeholder="Ad Soyad">
+<br>
+
+<button onclick="startExperiment()">Deneyi Başlat (5 Kez)</button>
+<button onclick="downloadCSV()">Excel'e İndir</button>
+<button onclick="openTeacherPanel()">Öğretmen Paneli</button>
+
+<div class="result-box" id="averageResult"></div>
+
+<table id="resultTable">
+<thead>
+<tr>
+<th>Öğrenci</th>
+<th>1. Deney</th>
+<th>2. Deney</th>
+<th>3. Deney</th>
+<th>4. Deney</th>
+<th>5. Deney</th>
+<th>Ortalama</th>
+</tr>
+</thead>
+<tbody>
+</tbody>
+</table>
+
+<h2>📊 Ortalama Grafiği</h2>
+<canvas id="averageChart"></canvas>
+
+<div id="teacherPanel">
+
+<h2>👨‍🏫 Öğretmen Paneli</h2>
+
+<p><b>Toplam Öğrenci:</b> <span id="totalStudents">0</span></p>
+<p><b>Toplam Deney:</b> <span id="totalExperiments">0</span></p>
+<p><b>Genel Ortalama:</b> <span id="teacherAverage">0</span></p>
+
+<button onclick="resetData()">Tüm Verileri Sıfırla</button>
+
+</div>
+
+</div>
+
+<script>
+
+let allData = [];
+let averages = [];
+
+const ctx = document.getElementById('averageChart').getContext('2d');
+
+let chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Genel Ortalama',
+            data: [],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+function rollUntilSix() {
+    let count = 0;
+    let dice;
+    do {
+        dice = Math.floor(Math.random() * 6) + 1;
+        count++;
+    } while (dice !== 6);
+    return count;
+}
+
+function startExperiment() {
+
+    const name = document.getElementById("studentName").value.trim();
+
+    if (name === "") {
+        alert("Lütfen adınızı giriniz.");
+        return;
+    }
+
+    let results = [];
+
+    for (let i = 0; i < 5; i++) {
+        results.push(rollUntilSix());
+    }
+
+    let avg = (results.reduce((a, b) => a + b, 0) / 5).toFixed(2);
+
+    let row = [name, ...results, avg];
+
+    allData.push(row);
+
+    addRowToTable(row);
+
+    updateOverallAverage();
+
+    updateTeacherPanel();
+
+    document.getElementById("studentName").value = "";
+
+}
+
+function addRowToTable(rowData) {
+
+    const table = document.getElementById("resultTable").getElementsByTagName("tbody")[0];
+
+    const newRow = table.insertRow();
+
+    rowData.forEach(data => {
+        const cell = newRow.insertCell();
+        cell.textContent = data;
+    });
+
+}
+
+function updateOverallAverage() {
+
+    let total = 0;
+    let count = 0;
+
+    allData.forEach(row => {
+        for (let i = 1; i <= 5; i++) {
+            total += parseInt(row[i]);
+            count++;
+        }
+    });
+
+    if (count > 0) {
+
+        let overallAvg = (total / count).toFixed(3);
+
+        document.getElementById("averageResult").textContent =
+            "Genel Ortalama (e sayısına yaklaşır): " + overallAvg;
+
+        averages.push(overallAvg);
+
+        chart.data.labels.push(allData.length);
+        chart.data.datasets[0].data.push(overallAvg);
+        chart.update();
+
+    }
+
+}
+
+function updateTeacherPanel() {
+
+    let totalStudents = allData.length;
+
+    let totalExperiments = totalStudents * 5;
+
+    let total = 0;
+    let count = 0;
+
+    allData.forEach(row => {
+        for (let i = 1; i <= 5; i++) {
+            total += parseInt(row[i]);
+            count++;
+        }
+    });
+
+    let avg = 0;
+
+    if (count > 0) {
+        avg = (total / count).toFixed(3);
+    }
+
+    document.getElementById("totalStudents").textContent = totalStudents;
+    document.getElementById("totalExperiments").textContent = totalExperiments;
+    document.getElementById("teacherAverage").textContent = avg;
+
+}
+
+function downloadCSV() {
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+
+    csvContent += "Ogrenci,Deney1,Deney2,Deney3,Deney4,Deney5,Ortalama\n";
+
+    allData.forEach(row => {
+        csvContent += row.join(",") + "\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+
+    const link = document.createElement("a");
+
+    link.setAttribute("href", encodedUri);
+
+    link.setAttribute("download", "zar_deneyi_sonuclar.csv");
+
+    document.body.appendChild(link);
+
+    link.click();
+
+}
+
+function openTeacherPanel() {
+
+    let password = prompt("Öğretmen şifresini giriniz:");
+
+    if (password === "1234") {
+        document.getElementById("teacherPanel").style.display = "block";
+    } else {
+        alert("Şifre yanlış");
+    }
+
+}
+
+function resetData() {
+
+    if (confirm("Tüm verileri silmek istiyor musunuz?")) {
+
+        allData = [];
+
+        averages = [];
+
+        document.querySelector("#resultTable tbody").innerHTML = "";
+
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+
+        chart.update();
+
+        document.getElementById("averageResult").textContent = "";
+
+        updateTeacherPanel();
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
