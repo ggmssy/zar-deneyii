@@ -58,7 +58,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid 
       <div class="statGrid"><div class="stat"><b id="totalExperiments">0</b><span>Toplam</span></div><div class="stat"><b id="realExperiments">0</b><span>Ziyaretçi</span></div><div class="stat"><b id="simExperiments">0</b><span>Sanal</span></div><div class="stat"><b id="currentAverage">0</b><span>Genel Ort.</span></div><div class="stat"><b id="difference">-</b><span>e ile fark</span></div></div>
       <div><span class="badge">e = 2.71828</span><span class="badge" id="divisorBadge">Bölen: 100</span><span class="badge" id="lastAction">Henüz deney yok</span></div>
       <div class="chartBox"><canvas id="lineChart"></canvas></div>
-      <p class="small">Kırmızı kesikli çizgi e değeridir. Sarı eğri sanal deney ortalaması, kırmızı eğri ziyaretçi ortalamasıdır.</p>
+      <p class="small">Kırmızı kesikli çizgi e değeridir. Sarı noktalar/çizgi sanal veri eklendiğinde oluşan genel ortalamayı, kırmızı noktalar/çizgi ziyaretçi veri eklendiğinde oluşan genel ortalamayı gösterir.</p>
       <div class="miniCharts"><div class="miniBox"><canvas id="zoomChart"></canvas></div><div class="miniBox"><canvas id="histChart"></canvas></div></div>
     </div>
   </div>
@@ -83,7 +83,7 @@ function changeDivisor(){divisor=Number(document.getElementById('divisorSelect')
 
 const eLinePlugin={id:'eLinePlugin',afterDraw(chart){if(chart.canvas.id!=='lineChart'&&chart.canvas.id!=='zoomChart')return;const{ctx,chartArea:{left,right},scales:{y}}=chart;const yPos=y.getPixelForValue(E_VALUE);ctx.save();ctx.beginPath();ctx.setLineDash([8,6]);ctx.moveTo(left,yPos);ctx.lineTo(right,yPos);ctx.lineWidth=2;ctx.strokeStyle='#d71920';ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#d71920';ctx.font='bold 13px Arial';ctx.fillText('e = 2.718',left+8,yPos-8);ctx.restore()}};Chart.register(eLinePlugin);
 
-let lineChart=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:[],datasets:[{label:'Sanal Deney Ortalaması',data:[],borderColor:'#ffd000',backgroundColor:'#ffd000',borderWidth:4,tension:.18,pointRadius:0},{label:'Ziyaretçi Deney Ortalaması',data:[],borderColor:'#d71920',backgroundColor:'#d71920',borderWidth:4,tension:.18,pointRadius:0},{label:'Ziyaretçi Kayıt Noktaları',type:'scatter',data:[],backgroundColor:'#d71920',borderColor:'#d71920',pointStyle:'star',pointRadius:8}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:160},plugins:{legend:{display:true}},scales:{x:{title:{display:true,text:'Deney Sayısı'},ticks:{maxTicksLimit:12}},y:{title:{display:true,text:'Ortalama'},beginAtZero:false,suggestedMin:2,suggestedMax:5}}}});
+let lineChart=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:[],datasets:[{label:'Genel Ortalama - Sanal Eklenen Noktalar',data:[],borderColor:'#ffd000',backgroundColor:'#ffd000',borderWidth:4,tension:.18,pointRadius:0,spanGaps:true},{label:'Genel Ortalama - Ziyaretçi Eklenen Noktalar',data:[],borderColor:'#d71920',backgroundColor:'#d71920',borderWidth:4,tension:.18,pointRadius:0,spanGaps:true},{label:'Ziyaretçi Kayıt Noktaları',type:'scatter',data:[],backgroundColor:'#d71920',borderColor:'#d71920',pointStyle:'star',pointRadius:8}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:160},plugins:{legend:{display:true}},scales:{x:{title:{display:true,text:'Deney Sayısı'},ticks:{maxTicksLimit:12}},y:{title:{display:true,text:'Genel Birikimli Ortalama'},beginAtZero:false,suggestedMin:2,suggestedMax:5}}}});
 let zoomChart=new Chart(document.getElementById('zoomChart'),{type:'line',data:{labels:[],datasets:[{label:'Yakın Plan Sanal Ortalama',data:[],borderColor:'#d71920',backgroundColor:'#ffd000',borderWidth:3,tension:.18,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:160},scales:{x:{display:false},y:{beginAtZero:false,suggestedMin:2,suggestedMax:5}}}});
 let histChart=new Chart(document.getElementById('histChart'),{type:'bar',data:{labels:['2','3','4','5','6','7','8+'],datasets:[{label:'Adım Frekansı',data:[0,0,0,0,0,0,0],backgroundColor:'#d71920',borderColor:'#ffd000',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:160},scales:{y:{beginAtZero:true}}}});
 
@@ -176,14 +176,19 @@ function resetAll(){
 
 function buildSeries(){
   let labels=[],simSeries=[],visitorSeries=[],visitorPoints=[];
-  let simTotal=0,simCount=0,visitorTotal=0,visitorCount=0;
+  let runningTotal=0,runningCount=0;
   const step=Math.max(1,Math.floor(data.length/MAX_GRAPH_POINTS));
   data.forEach((x,i)=>{
-    if(x.type==='Sanal'){simTotal+=x.steps;simCount++}
-    if(x.type==='Ziyaretçi'){visitorTotal+=x.steps;visitorCount++}
+    runningTotal += x.steps;
+    runningCount++;
+    const currentAvg = runningTotal/runningCount;
     const shouldPlot=(i%step===0)||i===data.length-1||x.type==='Ziyaretçi';
-    if(shouldPlot){labels.push(i+1);simSeries.push(simCount?simTotal/simCount:null);visitorSeries.push(visitorCount?visitorTotal/visitorCount:null)}
-    if(x.type==='Ziyaretçi')visitorPoints.push({x:i+1,y:visitorTotal/visitorCount});
+    if(shouldPlot){
+      labels.push(i+1);
+      simSeries.push(x.type==='Sanal' ? currentAvg : null);
+      visitorSeries.push(x.type==='Ziyaretçi' ? currentAvg : null);
+    }
+    if(x.type==='Ziyaretçi') visitorPoints.push({x:i+1,y:currentAvg});
   });
   return {labels,simSeries,visitorSeries,visitorPoints};
 }
