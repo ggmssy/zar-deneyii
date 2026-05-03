@@ -13,67 +13,83 @@
     --green:#198754;
     --orange:#f39c12;
     --red:#c0392b;
+    --purple:#7b2cff;
 }
 *{box-sizing:border-box}
 body{
     margin:0;
     font-family:Arial,Helvetica,sans-serif;
-    background:linear-gradient(135deg,#edf4ff,#ffffff);
+    background:linear-gradient(135deg,#eef5ff,#ffffff);
     color:var(--dark);
     text-align:center;
 }
-.container{max-width:1150px;margin:auto;padding:18px}
+.container{max-width:1180px;margin:auto;padding:18px}
 .hero{
     background:linear-gradient(135deg,#1f5eff,#4bb3fd);
     color:white;
-    padding:26px 18px;
-    border-radius:24px;
+    padding:28px 18px;
+    border-radius:26px;
     margin-bottom:18px;
     box-shadow:0 10px 30px rgba(31,94,255,.25)
 }
-.hero h1{margin:0 0 8px;font-size:32px}
-.hero p{margin:6px;font-size:17px}
+.hero h1{margin:0 0 8px;font-size:34px}
+.hero p{margin:7px;font-size:18px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .card{
     background:white;
-    border-radius:22px;
+    border-radius:24px;
     padding:20px;
     margin:14px 0;
     box-shadow:0 8px 22px rgba(0,0,0,.08);
 }
 button{
-    padding:12px 18px;
+    padding:13px 18px;
     margin:7px;
     border:none;
-    border-radius:13px;
+    border-radius:14px;
     background:var(--primary);
     color:white;
     font-size:16px;
     font-weight:700;
     cursor:pointer;
 }
-button:hover{filter:brightness(.92)}
+button:hover{filter:brightness(.92);transform:translateY(-1px)}
+button:disabled{background:#9aa8bd;cursor:not-allowed;transform:none}
 button.secondary{background:#5d6d7e}
 button.green{background:var(--green)}
 button.orange{background:var(--orange)}
 button.red{background:var(--red)}
+button.purple{background:var(--purple)}
 .statbox{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(5,1fr);
     gap:12px;
     margin-top:10px;
 }
 .stat{
     background:#f6f9ff;
     border:1px solid #dce8ff;
-    border-radius:16px;
+    border-radius:18px;
     padding:14px;
 }
 .stat .num{font-size:25px;font-weight:bold;color:var(--primary)}
 .small{font-size:13px;color:#5f6f85}
-.big{font-size:28px;font-weight:bold;color:var(--primary)}
-.progressWrap{height:14px;background:#e8edf5;border-radius:20px;overflow:hidden;margin:12px auto;max-width:420px}
-.progress{height:100%;background:linear-gradient(90deg,#1f5eff,#4bb3fd);width:0%}
+.big{font-size:30px;font-weight:bold;color:var(--primary)}
+.progressWrap{height:16px;background:#e8edf5;border-radius:22px;overflow:hidden;margin:12px auto;max-width:460px}
+.progress{height:100%;background:linear-gradient(90deg,#1f5eff,#4bb3fd);width:0%;transition:width .25s}
+.simProgress{height:18px;background:#e8edf5;border-radius:22px;overflow:hidden;margin:12px auto;max-width:520px}
+.simBar{height:100%;background:linear-gradient(90deg,#7b2cff,#f39c12);width:0%;transition:width .18s}
+.badge{
+    display:inline-block;
+    padding:7px 12px;
+    border-radius:999px;
+    background:#eef4ff;
+    color:#1f5eff;
+    font-weight:bold;
+    margin:4px;
+}
+.flash{animation:flash .55s ease-in-out}
+@keyframes flash{0%{background:#fff7d6}100%{background:white}}
 .dice{
     width:92px;height:92px;border-radius:20px;background:white;border:4px solid var(--dark);
     margin:12px auto;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
@@ -83,11 +99,14 @@ button.red{background:var(--red)}
 .show{visibility:visible}
 .roll{animation:shake .42s ease-in-out}
 @keyframes shake{0%{transform:rotate(0)}25%{transform:rotate(16deg)}50%{transform:rotate(-16deg)}75%{transform:rotate(10deg)}100%{transform:rotate(0)}}
-canvas{max-height:420px}
+.chartBox{height:520px;position:relative}
+.histBox{height:420px;position:relative}
+canvas{width:100%!important;height:100%!important}
 table{width:100%;border-collapse:collapse;margin-top:12px;background:white;font-size:14px}
 th,td{border:1px solid #d9e2ef;padding:8px}th{background:var(--primary);color:white}
 .note{background:#fff8e6;border:1px solid #ffe0a3;border-radius:14px;padding:12px;margin-top:10px;text-align:left}
-@media(max-width:800px){.grid{grid-template-columns:1fr}.statbox{grid-template-columns:1fr 1fr}.hero h1{font-size:25px}}
+#simStatus{font-weight:bold;color:var(--purple);min-height:26px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.statbox{grid-template-columns:1fr 1fr}.hero h1{font-size:25px}.chartBox{height:430px}.histBox{height:360px}}
 </style>
 </head>
 <body>
@@ -96,6 +115,21 @@ th,td{border:1px solid #d9e2ef;padding:8px}th{background:var(--primary);color:wh
         <h1>🎲 e Sayısı Deney Platformu</h1>
         <p>Rastgele sayıların toplamı 1'i geçene kadar kaç adım gerekir?</p>
         <p><b>Deney sayısı arttıkça ortalama e = 2.71828... değerine yaklaşır.</b></p>
+    </div>
+
+    <div class="card" id="summaryCard">
+        <h2>📌 Canlı Sonuç Paneli</h2>
+        <div class="statbox">
+            <div class="stat"><div class="num" id="totalExperiments">0</div><div>Toplam Deney</div></div>
+            <div class="stat"><div class="num" id="realExperiments">0</div><div>Ziyaretçi</div></div>
+            <div class="stat"><div class="num" id="simExperiments">0</div><div>Sanal</div></div>
+            <div class="stat"><div class="num" id="currentAverage">0</div><div>Ortalama</div></div>
+            <div class="stat"><div class="num" id="difference">-</div><div>e ile Fark</div></div>
+        </div>
+        <p>
+            <span class="badge">e = 2.71828...</span>
+            <span class="badge" id="lastAction">Henüz deney yapılmadı</span>
+        </p>
     </div>
 
     <div class="grid">
@@ -117,48 +151,46 @@ th,td{border:1px solid #d9e2ef;padding:8px}th{background:var(--primary);color:wh
             <p id="visitorMessage" class="small">Toplam 1'i geçene kadar devam edin.</p>
         </div>
 
-        <div class="card">
+        <div class="card" id="simulationCard">
             <h2>🤖 Sanal Öğrenci Simülasyonu</h2>
-            <p>Bilgisayar aynı deneyi çok sayıda kez tekrar eder ve ortalamanın e'ye yaklaşmasını gösterir.</p>
-            <button onclick="simulate(100)">100 Deney</button>
-            <button onclick="simulate(500)">500 Deney</button>
-            <button onclick="simulate(1000)">1000 Deney</button>
-            <button class="orange" onclick="simulate(5000)">5000 Deney</button>
+            <p>Butona basınca bilgisayar deneyi parça parça çalıştırır. Grafik ve sayaçlar anlık güncellenir.</p>
+            <button onclick="simulateAnimated(100)">100 Deney</button>
+            <button onclick="simulateAnimated(500)">500 Deney</button>
+            <button onclick="simulateAnimated(1000)">1000 Deney</button>
+            <button class="orange" onclick="simulateAnimated(5000)">5000 Deney</button>
+            <button class="purple" onclick="simulateAnimated(10000)">10000 Deney</button>
+            <br>
+            <button class="secondary" onclick="pauseSimulation()">Duraklat</button>
+            <button class="red" onclick="resetSimulationOnly()">Sanal Deneyi Sıfırla</button>
+            <div class="simProgress"><div class="simBar" id="simBar"></div></div>
+            <p id="simStatus">Sanal deney bekliyor.</p>
             <div class="note">
-                <b>Sunum cümlesi:</b> Önce bilgisayar büyük veriyle e'ye yaklaşmayı gösterir. Sonra ziyaretçiler kendi deneyleriyle canlı veriye katkı sağlar.
+                <b>Sunum önerisi:</b> 100 → 500 → 1000 → 5000 sırasıyla basın. Grafik göz önünde e çizgisine yaklaşacaktır.
             </div>
         </div>
     </div>
 
     <div class="card">
-        <h2>📌 Canlı Sonuç Paneli</h2>
-        <div class="statbox">
-            <div class="stat"><div class="num" id="totalExperiments">0</div><div>Toplam Deney</div></div>
-            <div class="stat"><div class="num" id="realExperiments">0</div><div>Ziyaretçi Deneyi</div></div>
-            <div class="stat"><div class="num" id="simExperiments">0</div><div>Sanal Deney</div></div>
-            <div class="stat"><div class="num" id="currentAverage">0</div><div>Genel Ortalama</div></div>
-        </div>
-        <p>e ile fark: <b id="difference">-</b></p>
+        <h2>📈 e'ye Yaklaşma Grafiği</h2>
+        <div class="chartBox"><canvas id="lineChart"></canvas></div>
+        <p class="small">Kırmızı kesikli çizgi: e = 2.71828... | Mavi çizgi: tüm deneylerin o ana kadarki ortalaması | Mor noktalar: ziyaretçi katkıları</p>
+    </div>
+
+    <div class="card">
+        <h2>📊 Deney Sonuçları Dağılımı</h2>
+        <div class="histBox"><canvas id="histChart"></canvas></div>
+        <p class="small">Bu grafik deneylerin kaç adımda tamamlandığını gösterir.</p>
+    </div>
+
+    <div class="card">
         <button onclick="downloadCSV()">Excel / CSV İndir</button>
         <button class="red" onclick="resetAll()">Tüm Verileri Sıfırla</button>
     </div>
 
     <div class="card">
-        <h2>📈 e'ye Yaklaşma Grafiği</h2>
-        <canvas id="lineChart"></canvas>
-        <p class="small">Kesikli referans çizgisi: e = 2.71828...</p>
-    </div>
-
-    <div class="card">
-        <h2>📊 Deney Sonuçları Dağılımı</h2>
-        <canvas id="histChart"></canvas>
-        <p class="small">Bu grafik deneylerin kaç adımda tamamlandığını gösterir.</p>
-    </div>
-
-    <div class="card">
         <h2>📋 Son 20 Deney</h2>
         <table>
-            <thead><tr><th>No</th><th>Tür</th><th>Adım Sayısı</th><th>Ortalama</th></tr></thead>
+            <thead><tr><th>No</th><th>Tür</th><th>Adım Sayısı</th><th>O Ana Kadarki Ortalama</th></tr></thead>
             <tbody id="lastRows"></tbody>
         </table>
     </div>
@@ -169,11 +201,16 @@ const E_VALUE = Math.E;
 let data = JSON.parse(localStorage.getItem('eDeneyData')) || [];
 let visitorSum = 0;
 let visitorSteps = 0;
-let lastGenerated = 0;
+let simulationRunning = false;
+let simulationPaused = false;
+let simulationTarget = 0;
+let simulationDone = 0;
+let animationTimer = null;
 
 const dicePatterns={1:[5],2:[1,9],3:[1,5,9],4:[1,3,7,9],5:[1,3,5,7,9],6:[1,3,4,6,7,9]};
 function showDice(n){for(let i=1;i<=9;i++)document.getElementById('d'+i).classList.remove('show');dicePatterns[n].forEach(p=>document.getElementById('d'+p).classList.add('show'));}
 function animateDice(){const dice=document.getElementById('dice');dice.classList.remove('roll');void dice.offsetWidth;dice.classList.add('roll');showDice(Math.floor(Math.random()*6)+1);}
+function flashCard(id){const el=document.getElementById(id);el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}
 
 const eLinePlugin = {
     id:'eLinePlugin',
@@ -202,22 +239,30 @@ const lineCtx=document.getElementById('lineChart').getContext('2d');
 let lineChart=new Chart(lineCtx,{
     type:'line',
     data:{labels:[],datasets:[
-        {label:'Genel Ortalama',data:[],borderWidth:3,tension:.2,pointRadius:1},
-        {label:'Ziyaretçi Katkıları',data:[],type:'scatter',pointRadius:5}
+        {label:'Genel Ortalama',data:[],borderWidth:3,tension:.22,pointRadius:0,borderColor:'#1f5eff',backgroundColor:'#1f5eff'},
+        {label:'Ziyaretçi Katkıları',data:[],type:'scatter',pointRadius:5,backgroundColor:'#7b2cff'}
     ]},
-    options:{responsive:true,scales:{y:{min:1.5,max:4.2},x:{title:{display:true,text:'Deney Sayısı'}}}}
+    options:{
+        animation:{duration:180},
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+            y:{min:2.0,max:3.4,title:{display:true,text:'Ortalama Adım Sayısı'}},
+            x:{title:{display:true,text:'Deney Sayısı'}}
+        },
+        plugins:{legend:{display:true}}
+    }
 });
 
 const histCtx=document.getElementById('histChart').getContext('2d');
 let histChart=new Chart(histCtx,{
     type:'bar',
-    data:{labels:['2','3','4','5','6','7','8+'],datasets:[{label:'Frekans',data:[0,0,0,0,0,0,0]}]},
-    options:{responsive:true,scales:{y:{beginAtZero:true}}}
+    data:{labels:['2','3','4','5','6','7','8+'],datasets:[{label:'Frekans',data:[0,0,0,0,0,0,0],backgroundColor:'#4bb3fd'}]},
+    options:{animation:{duration:180},responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}
 });
 
 function visitorStep(){
     const value = Math.random();
-    lastGenerated = value;
     visitorSum += value;
     visitorSteps++;
     animateDice();
@@ -234,12 +279,15 @@ function visitorStep(){
 
 function saveVisitorExperiment(){
     if(visitorSum<=1){alert('Deney henüz tamamlanmadı. Toplam 1’i geçmeli.');return;}
-    addExperiment('Ziyaretçi', visitorSteps);
+    addExperiment('Ziyaretçi', visitorSteps, false);
+    document.getElementById('lastAction').textContent='Ziyaretçi deneyi eklendi: ' + visitorSteps + ' adım';
     resetVisitorExperiment();
+    saveAndRender();
+    flashCard('summaryCard');
 }
 
 function resetVisitorExperiment(){
-    visitorSum=0;visitorSteps=0;lastGenerated=0;
+    visitorSum=0;visitorSteps=0;
     document.getElementById('lastRandom').textContent='-';
     document.getElementById('visitorSteps').textContent='0';
     document.getElementById('visitorSum').textContent='0.000';
@@ -249,11 +297,68 @@ function resetVisitorExperiment(){
 }
 
 function oneExperiment(){let sum=0,count=0;while(sum<=1){sum+=Math.random();count++;}return count;}
-function simulate(n){for(let i=0;i<n;i++)addExperiment('Sanal', oneExperiment(), false);saveAndRender();}
 
-function addExperiment(type, steps, render=true){
+function simulateAnimated(n){
+    if(simulationRunning){alert('Simülasyon zaten çalışıyor. Önce duraklatın veya bitmesini bekleyin.');return;}
+    simulationRunning = true;
+    simulationPaused = false;
+    simulationTarget = n;
+    simulationDone = 0;
+    document.getElementById('simStatus').textContent = n + ' sanal deney başlatıldı...';
+    document.getElementById('lastAction').textContent = n + ' sanal deney çalışıyor';
+    flashCard('simulationCard');
+    runSimulationChunk();
+}
+
+function runSimulationChunk(){
+    if(!simulationRunning || simulationPaused) return;
+    const remaining = simulationTarget - simulationDone;
+    const chunk = Math.min(remaining, Math.max(1, Math.floor(simulationTarget/100)));
+    for(let i=0;i<chunk;i++){
+        addExperiment('Sanal', oneExperiment(), false);
+        simulationDone++;
+    }
+    saveAndRender();
+    const pct = Math.round((simulationDone/simulationTarget)*100);
+    document.getElementById('simBar').style.width = pct + '%';
+    document.getElementById('simStatus').textContent = simulationDone + ' / ' + simulationTarget + ' sanal deney tamamlandı (%' + pct + ')';
+
+    if(simulationDone < simulationTarget){
+        animationTimer = setTimeout(runSimulationChunk, 30);
+    }else{
+        simulationRunning = false;
+        document.getElementById('simStatus').textContent = simulationTarget + ' sanal deney tamamlandı. Ortalama güncellendi.';
+        document.getElementById('lastAction').textContent = simulationTarget + ' sanal deney eklendi';
+        flashCard('summaryCard');
+        setTimeout(()=>{document.getElementById('simBar').style.width='0%'},900);
+    }
+}
+
+function pauseSimulation(){
+    if(!simulationRunning){document.getElementById('simStatus').textContent='Çalışan simülasyon yok.';return;}
+    simulationPaused = !simulationPaused;
+    if(simulationPaused){
+        document.getElementById('simStatus').textContent='Simülasyon duraklatıldı: ' + simulationDone + ' / ' + simulationTarget;
+        clearTimeout(animationTimer);
+    }else{
+        document.getElementById('simStatus').textContent='Simülasyon devam ediyor...';
+        runSimulationChunk();
+    }
+}
+
+function resetSimulationOnly(){
+    if(!confirm('Sadece sanal deneyler silinsin mi? Ziyaretçi verileri korunur.')) return;
+    clearTimeout(animationTimer);
+    simulationRunning=false; simulationPaused=false; simulationDone=0; simulationTarget=0;
+    data = data.filter(x => x.type !== 'Sanal');
+    document.getElementById('simBar').style.width='0%';
+    document.getElementById('simStatus').textContent='Sanal deneyler sıfırlandı. Ziyaretçi verileri korundu.';
+    document.getElementById('lastAction').textContent='Sanal deneyler sıfırlandı';
+    saveAndRender();
+}
+
+function addExperiment(type, steps){
     data.push({type,steps,time:new Date().toLocaleString('tr-TR')});
-    if(render) saveAndRender();
 }
 function average(arr=data){return arr.length?arr.reduce((a,b)=>a+b.steps,0)/arr.length:0;}
 function saveAndRender(){localStorage.setItem('eDeneyData',JSON.stringify(data));renderAll();}
@@ -281,17 +386,15 @@ function renderAll(){
     lineChart.data.labels=labels;
     lineChart.data.datasets[0].data=avgSeries;
     lineChart.data.datasets[1].data=visitorPoints;
-    lineChart.update();
+    lineChart.update('none');
 
     const bins=[0,0,0,0,0,0,0];
     data.forEach(x=>{ if(x.steps>=8) bins[6]++; else if(x.steps>=2) bins[x.steps-2]++; });
     histChart.data.datasets[0].data=bins;
-    histChart.update();
+    histChart.update('none');
 
     const tbody=document.getElementById('lastRows');
     tbody.innerHTML='';
-    let runningAll=[];
-    data.forEach((x,i)=>{runningAll.push(x.steps);});
     data.slice(-20).reverse().forEach((x,idx)=>{
         const no=data.length-idx;
         const avgUntil=average(data.slice(0,no));
@@ -304,7 +407,17 @@ function downloadCSV(){
     data.forEach((x,i)=>{csv += `${i+1},${x.type},${x.steps},${x.time}\n`;});
     const link=document.createElement('a');link.href=encodeURI(csv);link.download='e_sayisi_deney_verileri.csv';document.body.appendChild(link);link.click();
 }
-function resetAll(){if(confirm('Tüm veriler silinsin mi?')){data=[];localStorage.removeItem('eDeneyData');renderAll();}}
+function resetAll(){
+    if(confirm('Tüm sanal ve ziyaretçi verileri silinsin mi?')){
+        clearTimeout(animationTimer);
+        simulationRunning=false; simulationPaused=false;
+        data=[];localStorage.removeItem('eDeneyData');
+        document.getElementById('simBar').style.width='0%';
+        document.getElementById('simStatus').textContent='Tüm veriler sıfırlandı.';
+        document.getElementById('lastAction').textContent='Tüm veriler sıfırlandı';
+        renderAll();
+    }
+}
 
 showDice(1);
 renderAll();
