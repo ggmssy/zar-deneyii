@@ -60,7 +60,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid 
       <div class="statGrid"><div class="stat"><b id="totalExperiments">0</b><span>Toplam</span></div><div class="stat"><b id="realExperiments">0</b><span>Ziyaretçi</span></div><div class="stat"><b id="simExperiments">0</b><span>Sanal</span></div><div class="stat"><b id="currentAverage">0</b><span>Ortalama</span></div><div class="stat"><b id="difference">-</b><span>e ile fark</span></div></div>
       <div><span class="badge">e = 2.71828</span><span class="badge" id="divisorBadge">Bölen: 100</span><span class="badge" id="lastAction">Henüz deney yok</span></div>
       <div class="chartBox"><canvas id="lineChart"></canvas></div>
-      <p class="small">Kırmızı kesikli çizgi e değeridir. Sarı çizgi tüm deneylerin ortalamasıdır. Kırmızı yıldızlar ziyaretçi deneyleridir.</p>
+      <p class="small">Kırmızı kesikli çizgi e değeridir. Sarı çizgi sanal deney ortalamasıdır. Kırmızı çizgi ziyaretçi deney ortalamasıdır. Kırmızı yıldızlar ziyaretçi kayıt noktalarıdır.</p>
       <div class="miniCharts"><div class="miniBox"><canvas id="zoomChart"></canvas></div><div class="miniBox"><canvas id="histChart"></canvas></div></div>
     </div>
   </div>
@@ -77,18 +77,18 @@ let simulationRunning=false, simulationPaused=false, simulationTarget=0, simulat
 
 function animateDice(n){const dice=document.getElementById('dice');dice.classList.remove('roll');void dice.offsetWidth;dice.classList.add('roll');dice.textContent=n}
 function flash(id){const el=document.getElementById(id);el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
-function star(){const s=document.createElement('div');s.className='star';s.textContent='⭐';document.body.appendChild(s);setTimeout(()=>s.remove(),1000)}
+function star(steps){const s=document.createElement('div');s.className='star';s.innerHTML='⭐<br><span style="font-size:28px;color:#d71920;background:#fff3b0;border-radius:14px;padding:6px 12px;box-shadow:0 4px 14px rgba(0,0,0,.18)">'+steps+'. adımda 1’i geçti</span>';document.body.appendChild(s);setTimeout(()=>s.remove(),1400)}
 function changeDivisor(){divisor=Number(document.getElementById('divisorSelect').value);localStorage.setItem('eZarDivisor',divisor);document.getElementById('formulaText').textContent='Sanal zar: 1–'+divisor+' | Eklenen değer = Zar / '+divisor;document.getElementById('divisorBadge').textContent='Bölen: '+divisor;resetVisitorExperiment(false)}
 
 const eLinePlugin={id:'eLinePlugin',afterDraw(chart){if(chart.canvas.id!=='lineChart'&&chart.canvas.id!=='zoomChart')return;const{ctx,chartArea:{left,right},scales:{y}}=chart;const yPos=y.getPixelForValue(E_VALUE);ctx.save();ctx.beginPath();ctx.setLineDash([8,6]);ctx.moveTo(left,yPos);ctx.lineTo(right,yPos);ctx.lineWidth=2;ctx.strokeStyle='#d71920';ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#d71920';ctx.font='bold 13px Arial';ctx.fillText('e = 2.718',left+8,yPos-8);ctx.restore()}};
 Chart.register(eLinePlugin);
 
-let lineChart=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:[],datasets:[{label:'Genel Ortalama',data:[],borderColor:'#ffd000',backgroundColor:'#ffd000',borderWidth:4,tension:.18,pointRadius:0},{label:'Ziyaretçi',type:'scatter',data:[],backgroundColor:'#d71920',borderColor:'#d71920',pointStyle:'star',pointRadius:8}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:350},plugins:{legend:{display:true}},scales:{x:{title:{display:true,text:'Deney Sayısı'},ticks:{maxTicksLimit:12}},y:{title:{display:true,text:'Ortalama'},beginAtZero:false,suggestedMin:2,suggestedMax:5}}}});
+let lineChart=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:[],datasets:[{label:'Sanal Deney Ortalaması',data:[],borderColor:'#ffd000',backgroundColor:'#ffd000',borderWidth:4,tension:.18,pointRadius:0},{label:'Ziyaretçi Deney Ortalaması',data:[],borderColor:'#d71920',backgroundColor:'#d71920',borderWidth:4,tension:.18,pointRadius:0},{label:'Ziyaretçi Kayıt Noktaları',type:'scatter',data:[],backgroundColor:'#d71920',borderColor:'#d71920',pointStyle:'star',pointRadius:8}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:350},plugins:{legend:{display:true}},scales:{x:{title:{display:true,text:'Deney Sayısı'},ticks:{maxTicksLimit:12}},y:{title:{display:true,text:'Ortalama'},beginAtZero:false,suggestedMin:2,suggestedMax:5}}}});
 let zoomChart=new Chart(document.getElementById('zoomChart'),{type:'line',data:{labels:[],datasets:[{label:'Yakın Plan Ortalama',data:[],borderColor:'#d71920',backgroundColor:'#ffd000',borderWidth:3,tension:.18,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:350},scales:{x:{display:false},y:{beginAtZero:false,suggestedMin:2,suggestedMax:5}}}});
 let histChart=new Chart(document.getElementById('histChart'),{type:'bar',data:{labels:['2','3','4','5','6','7','8+'],datasets:[{label:'Adım Frekansı',data:[0,0,0,0,0,0,0],backgroundColor:'#d71920',borderColor:'#ffd000',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:350},scales:{y:{beginAtZero:true}}}});
 
 function visitorStep(){const roll=Math.floor(Math.random()*divisor)+1;const val=roll/divisor;visitorSum+=val;visitorSteps++;animateDice(roll);document.getElementById('lastDice').textContent=roll;document.getElementById('lastValue').textContent=val.toFixed(4);document.getElementById('visitorSteps').textContent=visitorSteps;document.getElementById('visitorSum').textContent=visitorSum.toFixed(4);document.getElementById('visitorProgress').style.width=Math.min(visitorSum*100,100)+'%';if(visitorSum>1){autoSaveVisitor()}}
-function autoSaveVisitor(){addExperiment('Ziyaretçi',visitorSteps,divisor);document.getElementById('lastAction').textContent='⭐ Ziyaretçi otomatik kaydedildi: '+visitorSteps+' adım';document.getElementById('visitorMessage').innerHTML='<b>⭐ Toplam 1’i geçti. Sonuç grafiğe işlendi.</b>';star();saveAndRender(true);flash('chartCard');setTimeout(()=>resetVisitorExperiment(false),900)}
+function autoSaveVisitor(){addExperiment('Ziyaretçi',visitorSteps,divisor);document.getElementById('lastAction').textContent='⭐ Ziyaretçi otomatik kaydedildi: '+visitorSteps+' adım';document.getElementById('visitorMessage').innerHTML='<b>⭐ Toplam 1’i geçti. Sonuç grafiğe işlendi.</b>';star(visitorSteps);saveAndRender(true);flash('chartCard');setTimeout(()=>resetVisitorExperiment(false),900)}
 function resetVisitorExperiment(updateMsg=true){visitorSum=0;visitorSteps=0;document.getElementById('dice').textContent='?';document.getElementById('lastDice').textContent='-';document.getElementById('lastValue').textContent='-';document.getElementById('visitorSteps').textContent='0';document.getElementById('visitorSum').textContent='0.000';document.getElementById('visitorProgress').style.width='0%';if(updateMsg)document.getElementById('visitorMessage').textContent='Toplam 1’i geçince sonuç otomatik kaydedilir.'}
 function oneExperiment(){let sum=0,count=0;while(sum<=1){sum+=(Math.floor(Math.random()*divisor)+1)/divisor;count++}return count}
 function simulateAnimated(n){if(simulationRunning){alert('Simülasyon zaten çalışıyor.');return}simulationRunning=true;simulationPaused=false;simulationTarget=n;simulationDone=0;document.getElementById('simStatus').textContent=n+' sanal deney başladı...';document.getElementById('lastAction').textContent=n+' sanal deney çalışıyor';flash('simulationCard');runChunk()}
@@ -98,15 +98,35 @@ function resetSimulationOnly(){if(!confirm('Sadece sanal deneyler silinsin mi?')
 function addExperiment(type,steps,div){data.push({type,steps,divisor:div,time:new Date().toLocaleString('tr-TR')})}
 function avg(arr=data){return arr.length?arr.reduce((a,b)=>a+b.steps,0)/arr.length:0}
 function saveAndRender(animated){localStorage.setItem('eZarDeneyData',JSON.stringify(data));renderAll(animated)}
-function renderAll(animated=true){const total=data.length,real=data.filter(x=>x.type==='Ziyaretçi').length,sim=data.filter(x=>x.type==='Sanal').length,a=avg();document.getElementById('totalExperiments').textContent=total;document.getElementById('realExperiments').textContent=real;document.getElementById('simExperiments').textContent=sim;document.getElementById('currentAverage').textContent=total?a.toFixed(4):'0';document.getElementById('difference').textContent=total?Math.abs(a-E_VALUE).toFixed(4):'-';let labels=[],series=[],visitor=[],running=0;data.forEach((x,i)=>{running+=x.steps;const cur=running/(i+1);labels.push(i+1);series.push(cur);if(x.type==='Ziyaretçi')visitor.push({x:i+1,y:cur})});lineChart.data.labels=labels;lineChart.data.datasets[0].data=series;lineChart.data.datasets[1].data=visitor;const visibleSeries = series.length ? series : [E_VALUE];
+function renderAll(animated=true){const total=data.length,real=data.filter(x=>x.type==='Ziyaretçi').length,sim=data.filter(x=>x.type==='Sanal').length,a=avg();document.getElementById('totalExperiments').textContent=total;document.getElementById('realExperiments').textContent=real;document.getElementById('simExperiments').textContent=sim;document.getElementById('currentAverage').textContent=total?a.toFixed(4):'0';document.getElementById('difference').textContent=total?Math.abs(a-E_VALUE).toFixed(4):'-';let labels=[],simSeries=[],visitorSeries=[],visitorPoints=[];
+let simTotal=0, simCount=0, visitorTotal=0, visitorCount=0;
+data.forEach((x,i)=>{
+  labels.push(i+1);
+  if(x.type==='Sanal'){
+    simTotal += x.steps; simCount++;
+  }
+  if(x.type==='Ziyaretçi'){
+    visitorTotal += x.steps; visitorCount++;
+  }
+  simSeries.push(simCount ? simTotal/simCount : null);
+  visitorSeries.push(visitorCount ? visitorTotal/visitorCount : null);
+  if(x.type==='Ziyaretçi') visitorPoints.push({x:i+1,y:visitorTotal/visitorCount});
+});
+lineChart.data.labels=labels;
+lineChart.data.datasets[0].data=simSeries;
+lineChart.data.datasets[1].data=visitorSeries;
+lineChart.data.datasets[2].data=visitorPoints;
+const combinedSeries = [...simSeries, ...visitorSeries].filter(v=>v!==null);
+const visibleSeries = combinedSeries.length ? combinedSeries : [E_VALUE];
 const minY = Math.max(0, Math.min(...visibleSeries, E_VALUE) - 0.35);
 const maxY = Math.max(...visibleSeries, E_VALUE) + 0.35;
 lineChart.options.scales.y.min = minY;
 lineChart.options.scales.y.max = maxY;
 lineChart.update(animated?undefined:'none');
 zoomChart.data.labels=labels.slice(-300);
-zoomChart.data.datasets[0].data=series.slice(-300);
-const zoomSeries = series.slice(-300).length ? series.slice(-300) : [E_VALUE];
+zoomChart.data.datasets[0].data=simSeries.slice(-300);
+const zoomCombined = [...simSeries.slice(-300), ...visitorSeries.slice(-300)].filter(v=>v!==null);
+const zoomSeries = zoomCombined.length ? zoomCombined : [E_VALUE];
 zoomChart.options.scales.y.min = Math.max(0, Math.min(...zoomSeries, E_VALUE) - 0.25);
 zoomChart.options.scales.y.max = Math.max(...zoomSeries, E_VALUE) + 0.25;
 zoomChart.update(animated?undefined:'none');const bins=[0,0,0,0,0,0,0];data.forEach(x=>{if(x.steps>=8)bins[6]++;else if(x.steps>=2)bins[x.steps-2]++});histChart.data.datasets[0].data=bins;histChart.update(animated?undefined:'none');const tb=document.getElementById('lastRows');tb.innerHTML='';data.slice(-15).reverse().forEach((x,idx)=>{const no=data.length-idx;tb.innerHTML+=`<tr><td>${no}</td><td>${x.type}</td><td>${x.divisor}</td><td>${x.steps}</td><td>${avg(data.slice(0,no)).toFixed(4)}</td></tr>`})}
