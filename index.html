@@ -135,9 +135,44 @@ function animateAppend(newRows,n){
 }
 
 function stopAnimation(){if(animTimer)clearTimeout(animTimer);animating=false;document.getElementById('simStatus').textContent='Animasyon durduruldu. Mevcut veriler korundu.';localStorage.setItem('eZarDeneyDataPro',JSON.stringify(data));renderAll(true)}
-function resetSimulationOnly(){if(!confirm('Sadece sanal deneyler silinsin mi?'))return;stopAnimation();data=data.filter(x=>x.type!=='Sanal');document.getElementById('simBar').style.width='0%';document.getElementById('simStatus').textContent='Sanal deneyler sıfırlandı.';document.getElementById('lastAction').textContent='Sanal deneyler sıfırlandı';localStorage.setItem('eZarDeneyDataPro',JSON.stringify(data));renderAll(true)}
-function resetVisitorsOnly(){if(!confirm('Sadece gerçek/ziyaretçi deneyleri silinsin mi?'))return;data=data.filter(x=>x.type!=='Ziyaretçi');document.getElementById('lastAction').textContent='Gerçek kullanıcı verileri sıfırlandı';resetVisitorExperiment(false);localStorage.setItem('eZarDeneyDataPro',JSON.stringify(data));renderAll(true)}
-function resetAll(){if(confirm('Tüm veriler silinsin mi?')){stopAnimation();data=[];localStorage.removeItem('eZarDeneyDataPro');document.getElementById('simBar').style.width='0%';document.getElementById('lastAction').textContent='Tüm veriler sıfırlandı';resetVisitorExperiment(false);renderAll(true)}}
+function resetSimulationOnly(){
+  if(!confirm('Sadece sanal deneyler silinsin mi? Ziyaretçi verileri korunur.')) return;
+  clearTimeout(animTimer);
+  animating=false;
+  data = data.filter(x => x.type === 'Ziyaretçi');
+  localStorage.setItem('eZarDeneyDataPro', JSON.stringify(data));
+  document.getElementById('simBar').style.width='0%';
+  document.getElementById('simStatus').textContent='Sanal deneyler sıfırlandı. Ziyaretçi verileri korundu.';
+  document.getElementById('lastAction').textContent='Sanal deneyler sıfırlandı';
+  forceClearCharts();
+  renderAll(true);
+  renderTables();
+}
+function resetVisitorsOnly(){
+  if(!confirm('Sadece gerçek/ziyaretçi deneyleri silinsin mi? Sanal veriler korunur.')) return;
+  data = data.filter(x => x.type === 'Sanal');
+  localStorage.setItem('eZarDeneyDataPro', JSON.stringify(data));
+  document.getElementById('lastAction').textContent='Gerçek kullanıcı verileri sıfırlandı';
+  resetVisitorExperiment(false);
+  forceClearCharts();
+  renderAll(true);
+  renderTables();
+}
+function resetAll(){
+  if(confirm('Tüm sanal ve gerçek veriler silinsin mi?')){
+    clearTimeout(animTimer);
+    animating=false;
+    data=[];
+    localStorage.removeItem('eZarDeneyDataPro');
+    document.getElementById('simBar').style.width='0%';
+    document.getElementById('simStatus').textContent='Tüm veriler sıfırlandı.';
+    document.getElementById('lastAction').textContent='Tüm veriler sıfırlandı';
+    resetVisitorExperiment(false);
+    forceClearCharts();
+    renderAll(true);
+    renderTables();
+  }
+}
 
 function buildSeries(){
   let labels=[],simSeries=[],visitorSeries=[],visitorPoints=[];
@@ -169,7 +204,19 @@ function renderTables(){
   data.forEach(x=>{if(x.type==='Sanal'&&sn<500){sn++;simRows.innerHTML+=`<tr><td>${sn}</td><td>${x.divisor}</td><td>${x.steps}</td><td>${x.time}</td></tr>`} if(x.type==='Ziyaretçi'){vn++;visitorRows.innerHTML+=`<tr><td>${vn}</td><td>${x.divisor}</td><td>${x.steps}</td><td>${x.time}</td></tr>`}});
   if(data.filter(x=>x.type==='Sanal').length>500){simRows.innerHTML+=`<tr><td colspan="4">Performans için ilk 500 sanal veri gösteriliyor. Tam liste CSV dosyasında.</td></tr>`}
 }
-function downloadCSV(){let csv='data:text/csv;charset=utf-8,No,Tur,Bolen,AdimSayisi,Tarih\n';data.forEach((x,i)=>csv+=`${i+1},${x.type},${x.divisor},${x.steps},${x.time}\n`);const link=document.createElement('a');link.href=encodeURI(csv);link.download='e_sayisi_zar_deneyi_pro.csv';document.body.appendChild(link);link.click()}
+function forceClearCharts(){
+  lineChart.data.labels=[];
+  lineChart.data.datasets.forEach(ds=>ds.data=[]);
+  lineChart.update('none');
+  zoomChart.data.labels=[];
+  zoomChart.data.datasets.forEach(ds=>ds.data=[]);
+  zoomChart.update('none');
+  histChart.data.datasets[0].data=[0,0,0,0,0,0,0];
+  histChart.update('none');
+}
+function downloadCSV(){let csv='data:text/csv;charset=utf-8,No,Tur,Bolen,AdimSayisi,Tarih
+';data.forEach((x,i)=>csv+=`${i+1},${x.type},${x.divisor},${x.steps},${x.time}
+`);const link=document.createElement('a');link.href=encodeURI(csv);link.download='e_sayisi_zar_deneyi_pro.csv';document.body.appendChild(link);link.click()}
 
 document.getElementById('divisorSelect').value=divisor;changeDivisor();renderAll(false);
 </script>
