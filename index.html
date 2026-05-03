@@ -3,323 +3,311 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>e Sayısı Zar Deneyi - Gelişmiş Versiyon</title>
+<title>e Sayısı Deney Platformu</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background: #f4f6f9;
-        text-align: center;
-    }
-    .container {
-        max-width: 900px;
-        margin: auto;
-        padding: 20px;
-    }
-    h1 {
-        color: #2c3e50;
-    }
-    input {
-        padding: 10px;
-        font-size: 16px;
-        margin: 10px;
-        width: 220px;
-    }
-    button {
-        padding: 12px 20px;
-        font-size: 16px;
-        margin: 10px;
-        cursor: pointer;
-        border: none;
-        border-radius: 10px;
-        background-color: #3498db;
-        color: white;
-    }
-    button:hover {
-        background-color: #2980b9;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        background: white;
-    }
-    th, td {
-        border: 1px solid #ddd;
-        padding: 8px;
-    }
-    th {
-        background-color: #3498db;
-        color: white;
-    }
-    .result-box {
-        font-size: 18px;
-        margin-top: 15px;
-        font-weight: bold;
-    }
-    #teacherPanel {
-        display: none;
-        margin-top: 30px;
-        padding: 15px;
-        border: 2px solid #3498db;
-        border-radius: 12px;
-        background: #ffffff;
-    }
+:root{
+    --primary:#1f5eff;
+    --dark:#182236;
+    --light:#f4f7fb;
+    --green:#198754;
+    --orange:#f39c12;
+    --red:#c0392b;
+}
+*{box-sizing:border-box}
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:linear-gradient(135deg,#edf4ff,#ffffff);
+    color:var(--dark);
+    text-align:center;
+}
+.container{max-width:1150px;margin:auto;padding:18px}
+.hero{
+    background:linear-gradient(135deg,#1f5eff,#4bb3fd);
+    color:white;
+    padding:26px 18px;
+    border-radius:24px;
+    margin-bottom:18px;
+    box-shadow:0 10px 30px rgba(31,94,255,.25)
+}
+.hero h1{margin:0 0 8px;font-size:32px}
+.hero p{margin:6px;font-size:17px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{
+    background:white;
+    border-radius:22px;
+    padding:20px;
+    margin:14px 0;
+    box-shadow:0 8px 22px rgba(0,0,0,.08);
+}
+button{
+    padding:12px 18px;
+    margin:7px;
+    border:none;
+    border-radius:13px;
+    background:var(--primary);
+    color:white;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+}
+button:hover{filter:brightness(.92)}
+button.secondary{background:#5d6d7e}
+button.green{background:var(--green)}
+button.orange{background:var(--orange)}
+button.red{background:var(--red)}
+.statbox{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-top:10px;
+}
+.stat{
+    background:#f6f9ff;
+    border:1px solid #dce8ff;
+    border-radius:16px;
+    padding:14px;
+}
+.stat .num{font-size:25px;font-weight:bold;color:var(--primary)}
+.small{font-size:13px;color:#5f6f85}
+.big{font-size:28px;font-weight:bold;color:var(--primary)}
+.progressWrap{height:14px;background:#e8edf5;border-radius:20px;overflow:hidden;margin:12px auto;max-width:420px}
+.progress{height:100%;background:linear-gradient(90deg,#1f5eff,#4bb3fd);width:0%}
+.dice{
+    width:92px;height:92px;border-radius:20px;background:white;border:4px solid var(--dark);
+    margin:12px auto;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+    gap:6px;padding:12px;box-shadow:0 8px 18px rgba(0,0,0,.15)
+}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--dark);visibility:hidden;align-self:center;justify-self:center}
+.show{visibility:visible}
+.roll{animation:shake .42s ease-in-out}
+@keyframes shake{0%{transform:rotate(0)}25%{transform:rotate(16deg)}50%{transform:rotate(-16deg)}75%{transform:rotate(10deg)}100%{transform:rotate(0)}}
+canvas{max-height:420px}
+table{width:100%;border-collapse:collapse;margin-top:12px;background:white;font-size:14px}
+th,td{border:1px solid #d9e2ef;padding:8px}th{background:var(--primary);color:white}
+.note{background:#fff8e6;border:1px solid #ffe0a3;border-radius:14px;padding:12px;margin-top:10px;text-align:left}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.statbox{grid-template-columns:1fr 1fr}.hero h1{font-size:25px}}
 </style>
 </head>
 <body>
-
 <div class="container">
+    <div class="hero">
+        <h1>🎲 e Sayısı Deney Platformu</h1>
+        <p>Rastgele sayıların toplamı 1'i geçene kadar kaç adım gerekir?</p>
+        <p><b>Deney sayısı arttıkça ortalama e = 2.71828... değerine yaklaşır.</b></p>
+    </div>
 
-<h1>🎲 e Sayısı Zar Deneyi</h1>
+    <div class="grid">
+        <div class="card">
+            <h2>👤 Ziyaretçi Deneyi</h2>
+            <p>Her tıklamada 0 ile 1 arasında rastgele bir sayı üretilir. Toplam 1'i geçince deney tamamlanır.</p>
+            <div class="dice" id="dice">
+                <div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div>
+                <div class="dot" id="d4"></div><div class="dot" id="d5"></div><div class="dot" id="d6"></div>
+                <div class="dot" id="d7"></div><div class="dot" id="d8"></div><div class="dot" id="d9"></div>
+            </div>
+            <p>Son üretilen sayı: <span class="big" id="lastRandom">-</span></p>
+            <p>Adım sayısı: <span class="big" id="visitorSteps">0</span></p>
+            <p>Toplam: <span class="big" id="visitorSum">0.000</span></p>
+            <div class="progressWrap"><div class="progress" id="progressBar"></div></div>
+            <button onclick="visitorStep()">Rastgele Sayı Üret</button>
+            <button class="green" onclick="saveVisitorExperiment()">Deneyi Kaydet</button>
+            <button class="secondary" onclick="resetVisitorExperiment()">Yeni Ziyaretçi</button>
+            <p id="visitorMessage" class="small">Toplam 1'i geçene kadar devam edin.</p>
+        </div>
 
-<p>
-Her öğrenci <b>5 kez</b>, 6 gelene kadar zar atar.<br>
-Sonuçlar otomatik kaydedilir ve grafik oluşturulur.
-</p>
+        <div class="card">
+            <h2>🤖 Sanal Öğrenci Simülasyonu</h2>
+            <p>Bilgisayar aynı deneyi çok sayıda kez tekrar eder ve ortalamanın e'ye yaklaşmasını gösterir.</p>
+            <button onclick="simulate(100)">100 Deney</button>
+            <button onclick="simulate(500)">500 Deney</button>
+            <button onclick="simulate(1000)">1000 Deney</button>
+            <button class="orange" onclick="simulate(5000)">5000 Deney</button>
+            <div class="note">
+                <b>Sunum cümlesi:</b> Önce bilgisayar büyük veriyle e'ye yaklaşmayı gösterir. Sonra ziyaretçiler kendi deneyleriyle canlı veriye katkı sağlar.
+            </div>
+        </div>
+    </div>
 
-<input type="text" id="studentName" placeholder="Ad Soyad">
-<br>
+    <div class="card">
+        <h2>📌 Canlı Sonuç Paneli</h2>
+        <div class="statbox">
+            <div class="stat"><div class="num" id="totalExperiments">0</div><div>Toplam Deney</div></div>
+            <div class="stat"><div class="num" id="realExperiments">0</div><div>Ziyaretçi Deneyi</div></div>
+            <div class="stat"><div class="num" id="simExperiments">0</div><div>Sanal Deney</div></div>
+            <div class="stat"><div class="num" id="currentAverage">0</div><div>Genel Ortalama</div></div>
+        </div>
+        <p>e ile fark: <b id="difference">-</b></p>
+        <button onclick="downloadCSV()">Excel / CSV İndir</button>
+        <button class="red" onclick="resetAll()">Tüm Verileri Sıfırla</button>
+    </div>
 
-<button onclick="startExperiment()">Deneyi Başlat (5 Kez)</button>
-<button onclick="downloadCSV()">Excel'e İndir</button>
-<button onclick="openTeacherPanel()">Öğretmen Paneli</button>
+    <div class="card">
+        <h2>📈 e'ye Yaklaşma Grafiği</h2>
+        <canvas id="lineChart"></canvas>
+        <p class="small">Kesikli referans çizgisi: e = 2.71828...</p>
+    </div>
 
-<div class="result-box" id="averageResult"></div>
+    <div class="card">
+        <h2>📊 Deney Sonuçları Dağılımı</h2>
+        <canvas id="histChart"></canvas>
+        <p class="small">Bu grafik deneylerin kaç adımda tamamlandığını gösterir.</p>
+    </div>
 
-<table id="resultTable">
-<thead>
-<tr>
-<th>Öğrenci</th>
-<th>1. Deney</th>
-<th>2. Deney</th>
-<th>3. Deney</th>
-<th>4. Deney</th>
-<th>5. Deney</th>
-<th>Ortalama</th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-
-<h2>📊 Ortalama Grafiği</h2>
-<canvas id="averageChart"></canvas>
-
-<div id="teacherPanel">
-
-<h2>👨‍🏫 Öğretmen Paneli</h2>
-
-<p><b>Toplam Öğrenci:</b> <span id="totalStudents">0</span></p>
-<p><b>Toplam Deney:</b> <span id="totalExperiments">0</span></p>
-<p><b>Genel Ortalama:</b> <span id="teacherAverage">0</span></p>
-
-<button onclick="resetData()">Tüm Verileri Sıfırla</button>
-
-</div>
-
+    <div class="card">
+        <h2>📋 Son 20 Deney</h2>
+        <table>
+            <thead><tr><th>No</th><th>Tür</th><th>Adım Sayısı</th><th>Ortalama</th></tr></thead>
+            <tbody id="lastRows"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
+const E_VALUE = Math.E;
+let data = JSON.parse(localStorage.getItem('eDeneyData')) || [];
+let visitorSum = 0;
+let visitorSteps = 0;
+let lastGenerated = 0;
 
-let allData = [];
-let averages = [];
+const dicePatterns={1:[5],2:[1,9],3:[1,5,9],4:[1,3,7,9],5:[1,3,5,7,9],6:[1,3,4,6,7,9]};
+function showDice(n){for(let i=1;i<=9;i++)document.getElementById('d'+i).classList.remove('show');dicePatterns[n].forEach(p=>document.getElementById('d'+p).classList.add('show'));}
+function animateDice(){const dice=document.getElementById('dice');dice.classList.remove('roll');void dice.offsetWidth;dice.classList.add('roll');showDice(Math.floor(Math.random()*6)+1);}
 
-const ctx = document.getElementById('averageChart').getContext('2d');
-
-let chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: [],
-        datasets: [{
-            label: 'Genel Ortalama',
-            data: [],
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
+const eLinePlugin = {
+    id:'eLinePlugin',
+    afterDraw(chart){
+        if(chart.canvas.id !== 'lineChart') return;
+        const {ctx, chartArea:{left,right}, scales:{y}} = chart;
+        const yPos = y.getPixelForValue(E_VALUE);
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([8,6]);
+        ctx.moveTo(left,yPos);
+        ctx.lineTo(right,yPos);
+        ctx.lineWidth=2;
+        ctx.strokeStyle='#c0392b';
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle='#c0392b';
+        ctx.font='bold 13px Arial';
+        ctx.fillText('e = 2.71828', left+8, yPos-8);
+        ctx.restore();
     }
+};
+Chart.register(eLinePlugin);
+
+const lineCtx=document.getElementById('lineChart').getContext('2d');
+let lineChart=new Chart(lineCtx,{
+    type:'line',
+    data:{labels:[],datasets:[
+        {label:'Genel Ortalama',data:[],borderWidth:3,tension:.2,pointRadius:1},
+        {label:'Ziyaretçi Katkıları',data:[],type:'scatter',pointRadius:5}
+    ]},
+    options:{responsive:true,scales:{y:{min:1.5,max:4.2},x:{title:{display:true,text:'Deney Sayısı'}}}}
 });
 
-function rollUntilSix() {
-    let count = 0;
-    let dice;
-    do {
-        dice = Math.floor(Math.random() * 6) + 1;
-        count++;
-    } while (dice !== 6);
-    return count;
+const histCtx=document.getElementById('histChart').getContext('2d');
+let histChart=new Chart(histCtx,{
+    type:'bar',
+    data:{labels:['2','3','4','5','6','7','8+'],datasets:[{label:'Frekans',data:[0,0,0,0,0,0,0]}]},
+    options:{responsive:true,scales:{y:{beginAtZero:true}}}
+});
+
+function visitorStep(){
+    const value = Math.random();
+    lastGenerated = value;
+    visitorSum += value;
+    visitorSteps++;
+    animateDice();
+    document.getElementById('lastRandom').textContent=value.toFixed(3);
+    document.getElementById('visitorSteps').textContent=visitorSteps;
+    document.getElementById('visitorSum').textContent=visitorSum.toFixed(3);
+    document.getElementById('progressBar').style.width=Math.min(visitorSum*100,100)+'%';
+    if(visitorSum>1){
+        document.getElementById('visitorMessage').innerHTML='<b>Deney tamamlandı!</b> Sonucu kaydedebilirsiniz.';
+    }else{
+        document.getElementById('visitorMessage').textContent='Toplam henüz 1’i geçmedi. Devam edin.';
+    }
 }
 
-function startExperiment() {
-
-    const name = document.getElementById("studentName").value.trim();
-
-    if (name === "") {
-        alert("Lütfen adınızı giriniz.");
-        return;
-    }
-
-    let results = [];
-
-    for (let i = 0; i < 5; i++) {
-        results.push(rollUntilSix());
-    }
-
-    let avg = (results.reduce((a, b) => a + b, 0) / 5).toFixed(2);
-
-    let row = [name, ...results, avg];
-
-    allData.push(row);
-
-    addRowToTable(row);
-
-    updateOverallAverage();
-
-    updateTeacherPanel();
-
-    document.getElementById("studentName").value = "";
-
+function saveVisitorExperiment(){
+    if(visitorSum<=1){alert('Deney henüz tamamlanmadı. Toplam 1’i geçmeli.');return;}
+    addExperiment('Ziyaretçi', visitorSteps);
+    resetVisitorExperiment();
 }
 
-function addRowToTable(rowData) {
+function resetVisitorExperiment(){
+    visitorSum=0;visitorSteps=0;lastGenerated=0;
+    document.getElementById('lastRandom').textContent='-';
+    document.getElementById('visitorSteps').textContent='0';
+    document.getElementById('visitorSum').textContent='0.000';
+    document.getElementById('progressBar').style.width='0%';
+    document.getElementById('visitorMessage').textContent='Toplam 1’i geçene kadar devam edin.';
+    showDice(1);
+}
 
-    const table = document.getElementById("resultTable").getElementsByTagName("tbody")[0];
+function oneExperiment(){let sum=0,count=0;while(sum<=1){sum+=Math.random();count++;}return count;}
+function simulate(n){for(let i=0;i<n;i++)addExperiment('Sanal', oneExperiment(), false);saveAndRender();}
 
-    const newRow = table.insertRow();
+function addExperiment(type, steps, render=true){
+    data.push({type,steps,time:new Date().toLocaleString('tr-TR')});
+    if(render) saveAndRender();
+}
+function average(arr=data){return arr.length?arr.reduce((a,b)=>a+b.steps,0)/arr.length:0;}
+function saveAndRender(){localStorage.setItem('eDeneyData',JSON.stringify(data));renderAll();}
 
-    rowData.forEach(data => {
-        const cell = newRow.insertCell();
-        cell.textContent = data;
+function renderAll(){
+    const total=data.length;
+    const real=data.filter(x=>x.type==='Ziyaretçi').length;
+    const sim=data.filter(x=>x.type==='Sanal').length;
+    const avg=average();
+    document.getElementById('totalExperiments').textContent=total;
+    document.getElementById('realExperiments').textContent=real;
+    document.getElementById('simExperiments').textContent=sim;
+    document.getElementById('currentAverage').textContent=total?avg.toFixed(4):'0';
+    document.getElementById('difference').textContent=total?Math.abs(avg-E_VALUE).toFixed(4):'-';
+
+    let labels=[], avgSeries=[], visitorPoints=[];
+    let running=0;
+    data.forEach((x,i)=>{
+        running += x.steps;
+        const currentAvg = running/(i+1);
+        labels.push(i+1);
+        avgSeries.push(currentAvg.toFixed(4));
+        if(x.type==='Ziyaretçi') visitorPoints.push({x:i+1,y:currentAvg});
     });
+    lineChart.data.labels=labels;
+    lineChart.data.datasets[0].data=avgSeries;
+    lineChart.data.datasets[1].data=visitorPoints;
+    lineChart.update();
 
-}
+    const bins=[0,0,0,0,0,0,0];
+    data.forEach(x=>{ if(x.steps>=8) bins[6]++; else if(x.steps>=2) bins[x.steps-2]++; });
+    histChart.data.datasets[0].data=bins;
+    histChart.update();
 
-function updateOverallAverage() {
-
-    let total = 0;
-    let count = 0;
-
-    allData.forEach(row => {
-        for (let i = 1; i <= 5; i++) {
-            total += parseInt(row[i]);
-            count++;
-        }
+    const tbody=document.getElementById('lastRows');
+    tbody.innerHTML='';
+    let runningAll=[];
+    data.forEach((x,i)=>{runningAll.push(x.steps);});
+    data.slice(-20).reverse().forEach((x,idx)=>{
+        const no=data.length-idx;
+        const avgUntil=average(data.slice(0,no));
+        tbody.innerHTML += `<tr><td>${no}</td><td>${x.type}</td><td>${x.steps}</td><td>${avgUntil.toFixed(4)}</td></tr>`;
     });
-
-    if (count > 0) {
-
-        let overallAvg = (total / count).toFixed(3);
-
-        document.getElementById("averageResult").textContent =
-            "Genel Ortalama (e sayısına yaklaşır): " + overallAvg;
-
-        averages.push(overallAvg);
-
-        chart.data.labels.push(allData.length);
-        chart.data.datasets[0].data.push(overallAvg);
-        chart.update();
-
-    }
-
 }
 
-function updateTeacherPanel() {
-
-    let totalStudents = allData.length;
-
-    let totalExperiments = totalStudents * 5;
-
-    let total = 0;
-    let count = 0;
-
-    allData.forEach(row => {
-        for (let i = 1; i <= 5; i++) {
-            total += parseInt(row[i]);
-            count++;
-        }
-    });
-
-    let avg = 0;
-
-    if (count > 0) {
-        avg = (total / count).toFixed(3);
-    }
-
-    document.getElementById("totalStudents").textContent = totalStudents;
-    document.getElementById("totalExperiments").textContent = totalExperiments;
-    document.getElementById("teacherAverage").textContent = avg;
-
+function downloadCSV(){
+    let csv='data:text/csv;charset=utf-8,No,Tur,AdimSayisi,Tarih\n';
+    data.forEach((x,i)=>{csv += `${i+1},${x.type},${x.steps},${x.time}\n`;});
+    const link=document.createElement('a');link.href=encodeURI(csv);link.download='e_sayisi_deney_verileri.csv';document.body.appendChild(link);link.click();
 }
+function resetAll(){if(confirm('Tüm veriler silinsin mi?')){data=[];localStorage.removeItem('eDeneyData');renderAll();}}
 
-function downloadCSV() {
-
-    let csvContent = "data:text/csv;charset=utf-8,";
-
-    csvContent += "Ogrenci,Deney1,Deney2,Deney3,Deney4,Deney5,Ortalama\n";
-
-    allData.forEach(row => {
-        csvContent += row.join(",") + "\n";
-    });
-
-    const encodedUri = encodeURI(csvContent);
-
-    const link = document.createElement("a");
-
-    link.setAttribute("href", encodedUri);
-
-    link.setAttribute("download", "zar_deneyi_sonuclar.csv");
-
-    document.body.appendChild(link);
-
-    link.click();
-
-}
-
-function openTeacherPanel() {
-
-    let password = prompt("Öğretmen şifresini giriniz:");
-
-    if (password === "1234") {
-        document.getElementById("teacherPanel").style.display = "block";
-    } else {
-        alert("Şifre yanlış");
-    }
-
-}
-
-function resetData() {
-
-    if (confirm("Tüm verileri silmek istiyor musunuz?")) {
-
-        allData = [];
-
-        averages = [];
-
-        document.querySelector("#resultTable tbody").innerHTML = "";
-
-        chart.data.labels = [];
-        chart.data.datasets[0].data = [];
-
-        chart.update();
-
-        document.getElementById("averageResult").textContent = "";
-
-        updateTeacherPanel();
-
-    }
-
-}
-
+showDice(1);
+renderAll();
 </script>
-
 </body>
 </html>
