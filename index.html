@@ -47,13 +47,13 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid 
       <div class="card section" id="simulationCard">
         <h2>🤖 Sanal Simülasyon</h2>
         <p class="small">Aynı bölen değeriyle çok sayıda deney yapar. Grafik anlık işler.</p>
-        <div class="row"><button onclick="simulateAnimated(100)">+100</button><button onclick="simulateAnimated(500)">+500</button><button onclick="simulateAnimated(1000)">+1000</button><button class="yellow" onclick="simulateAnimated(5000)">+5000</button></div>
+        <div class="row"><button onclick="simulateAnimated(50)">+50</button><button onclick="simulateAnimated(100)">+100</button><button onclick="simulateAnimated(500)">+500</button><button onclick="simulateAnimated(1000)">+1000</button><button class="yellow" onclick="simulateAnimated(5000)">+5000</button></div>
         <div class="row"><button class="purple" onclick="simulateAnimated(10000)">+10000</button><button class="gray" onclick="pauseSimulation()">Duraklat</button><button class="red" onclick="resetSimulationOnly()">Sanalı Sıfırla</button></div>
         <div class="progressWrap"><div class="simBar" id="simBar"></div></div>
         <p id="simStatus" class="small">Sanal deney bekliyor.</p>
       </div>
 
-      <div class="card section"><h2>🧹 Veri İşlemleri</h2><div class="row"><button class="green" onclick="downloadCSV()">Excel/CSV</button><button class="red" onclick="resetAll()">Tümünü Sıfırla</button></div><p class="small">Not: Bu sürüm veriyi aynı cihazın tarayıcısında tutar.</p></div>
+      <div class="card section"><h2>🧹 Veri İşlemleri</h2><div class="row"><button class="green" onclick="downloadCSV()">Excel/CSV</button><button class="red" onclick="resetVisitorsOnly()">Gerçek Veriyi Sıfırla</button><button class="red" onclick="resetAll()">Tümünü Sıfırla</button></div><p class="small">Not: Bu sürüm veriyi aynı cihazın tarayıcısında tutar.</p></div>
     </div>
 
     <div class="card chartPanel" id="chartCard">
@@ -66,6 +66,20 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid 
   </div>
 
   <div class="card"><h2>📋 Son 15 Deney</h2><table><thead><tr><th>No</th><th>Tür</th><th>Bölen</th><th>Adım</th><th>O Ana Kadarki Ortalama</th></tr></thead><tbody id="lastRows"></tbody></table></div>
+
+  <div class="card">
+    <h2>📑 Tüm Veriler</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start">
+      <div>
+        <h3>🤖 Sanal Deney Verileri</h3>
+        <table><thead><tr><th>No</th><th>Bölen</th><th>Adım</th><th>Tarih</th></tr></thead><tbody id="simRows"></tbody></table>
+      </div>
+      <div>
+        <h3>👤 Gerçek/Ziyaretçi Deney Verileri</h3>
+        <table><thead><tr><th>No</th><th>Bölen</th><th>Adım</th><th>Tarih</th></tr></thead><tbody id="visitorRows"></tbody></table>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -95,6 +109,7 @@ function simulateAnimated(n){if(simulationRunning){alert('Simülasyon zaten çal
 function runChunk(){if(!simulationRunning||simulationPaused)return;const remaining=simulationTarget-simulationDone;const chunk=Math.min(remaining,Math.max(1,Math.floor(simulationTarget/120)));for(let i=0;i<chunk;i++){addExperiment('Sanal',oneExperiment(),divisor);simulationDone++}saveAndRender(false);const pct=Math.round(simulationDone/simulationTarget*100);document.getElementById('simBar').style.width=pct+'%';document.getElementById('simStatus').textContent=simulationDone+' / '+simulationTarget+' tamamlandı (%'+pct+')';if(simulationDone<simulationTarget){timer=setTimeout(runChunk,24)}else{simulationRunning=false;document.getElementById('simStatus').textContent=simulationTarget+' sanal deney tamamlandı.';document.getElementById('lastAction').textContent=simulationTarget+' sanal deney eklendi';setTimeout(()=>document.getElementById('simBar').style.width='0%',800);flash('chartCard')}}
 function pauseSimulation(){if(!simulationRunning){document.getElementById('simStatus').textContent='Çalışan simülasyon yok.';return}simulationPaused=!simulationPaused;if(simulationPaused){clearTimeout(timer);document.getElementById('simStatus').textContent='Duraklatıldı: '+simulationDone+' / '+simulationTarget}else{document.getElementById('simStatus').textContent='Devam ediyor...';runChunk()}}
 function resetSimulationOnly(){if(!confirm('Sadece sanal deneyler silinsin mi?'))return;clearTimeout(timer);simulationRunning=false;simulationPaused=false;data=data.filter(x=>x.type!=='Sanal');document.getElementById('simBar').style.width='0%';document.getElementById('simStatus').textContent='Sanal deneyler sıfırlandı.';document.getElementById('lastAction').textContent='Sanal deneyler sıfırlandı';saveAndRender(false)}
+function resetVisitorsOnly(){if(!confirm('Sadece gerçek/ziyaretçi deneyleri silinsin mi? Sanal veriler korunur.'))return;data=data.filter(x=>x.type!=='Ziyaretçi');document.getElementById('lastAction').textContent='Gerçek kullanıcı verileri sıfırlandı';resetVisitorExperiment(false);saveAndRender(true)}
 function addExperiment(type,steps,div){data.push({type,steps,divisor:div,time:new Date().toLocaleString('tr-TR')})}
 function avg(arr=data){return arr.length?arr.reduce((a,b)=>a+b.steps,0)/arr.length:0}
 function saveAndRender(animated){localStorage.setItem('eZarDeneyData',JSON.stringify(data));renderAll(animated)}
@@ -129,9 +144,25 @@ const zoomCombined = [...simSeries.slice(-300), ...visitorSeries.slice(-300)].fi
 const zoomSeries = zoomCombined.length ? zoomCombined : [E_VALUE];
 zoomChart.options.scales.y.min = Math.max(0, Math.min(...zoomSeries, E_VALUE) - 0.25);
 zoomChart.options.scales.y.max = Math.max(...zoomSeries, E_VALUE) + 0.25;
-zoomChart.update(animated?undefined:'none');const bins=[0,0,0,0,0,0,0];data.forEach(x=>{if(x.steps>=8)bins[6]++;else if(x.steps>=2)bins[x.steps-2]++});histChart.data.datasets[0].data=bins;histChart.update(animated?undefined:'none');const tb=document.getElementById('lastRows');tb.innerHTML='';data.slice(-15).reverse().forEach((x,idx)=>{const no=data.length-idx;tb.innerHTML+=`<tr><td>${no}</td><td>${x.type}</td><td>${x.divisor}</td><td>${x.steps}</td><td>${avg(data.slice(0,no)).toFixed(4)}</td></tr>`})}
+zoomChart.update(animated?undefined:'none');const bins=[0,0,0,0,0,0,0];data.forEach(x=>{if(x.steps>=8)bins[6]++;else if(x.steps>=2)bins[x.steps-2]++});histChart.data.datasets[0].data=bins;histChart.update(animated?undefined:'none');const tb=document.getElementById('lastRows');tb.innerHTML='';data.slice(-15).reverse().forEach((x,idx)=>{const no=data.length-idx;tb.innerHTML+=`<tr><td>${no}</td><td>${x.type}</td><td>${x.divisor}</td><td>${x.steps}</td><td>${avg(data.slice(0,no)).toFixed(4)}</td></tr>`});
+const simRows=document.getElementById('simRows');
+const visitorRows=document.getElementById('visitorRows');
+if(simRows && visitorRows){
+  simRows.innerHTML=''; visitorRows.innerHTML='';
+  let simNo=0, visitorNo=0;
+  data.forEach(x=>{
+    if(x.type==='Sanal'){
+      simNo++;
+      simRows.innerHTML += `<tr><td>${simNo}</td><td>${x.divisor}</td><td>${x.steps}</td><td>${x.time}</td></tr>`;
+    }
+    if(x.type==='Ziyaretçi'){
+      visitorNo++;
+      visitorRows.innerHTML += `<tr><td>${visitorNo}</td><td>${x.divisor}</td><td>${x.steps}</td><td>${x.time}</td></tr>`;
+    }
+  });
+}}
 function downloadCSV(){let csv='data:text/csv;charset=utf-8,No,Tur,Bolen,AdimSayisi,Tarih\n';data.forEach((x,i)=>csv+=`${i+1},${x.type},${x.divisor},${x.steps},${x.time}\n`);const link=document.createElement('a');link.href=encodeURI(csv);link.download='e_sayisi_zar_deneyi.csv';document.body.appendChild(link);link.click()}
-function resetAll(){if(confirm('Tüm veriler silinsin mi?')){clearTimeout(timer);simulationRunning=false;data=[];localStorage.removeItem('eZarDeneyData');document.getElementById('simBar').style.width='0%';document.getElementById('lastAction').textContent='Tüm veriler sıfırlandı';renderAll(true)}}
+function resetAll(){if(confirm('Tüm sanal ve gerçek veriler silinsin mi?')){clearTimeout(timer);simulationRunning=false;data=[];localStorage.removeItem('eZarDeneyData');document.getElementById('simBar').style.width='0%';document.getElementById('lastAction').textContent='Tüm veriler sıfırlandı';resetVisitorExperiment(false);renderAll(true)}}
 
 document.getElementById('divisorSelect').value=divisor;changeDivisor();renderAll(false);
 </script>
